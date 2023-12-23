@@ -13,3 +13,21 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+interface ClientConfig {
+  prometheus_urls: string[]
+}
+
+function init (config: ClientConfig): void {
+  // do something useful
+}
+
+fetch('/config')
+  .then(res => res.json())
+  .then(res => {
+    return res as ClientConfig
+  })
+  .then(init)
+  .catch(err => {
+    console.error(err)
+  })

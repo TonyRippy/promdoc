@@ -23,6 +23,7 @@ use env_logger::Env;
 use http_body_util::Full;
 use hyper::{server::conn::http1, service::service_fn, Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
+use serde::{Deserialize, Serialize};
 use std::io::Error;
 use std::process::ExitCode;
 use tokio::signal;
@@ -40,6 +41,11 @@ struct Args {
     port: u16,
 }
 
+#[derive(Serialize, Deserialize)]
+struct ClientConfig {
+    prometheus_urls: Vec<String>,
+}
+
 async fn serve<R>(req: Request<R>) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     match req.uri().path() {
         "/" => Response::builder()
@@ -50,6 +56,19 @@ async fn serve<R>(req: Request<R>) -> Result<Response<Full<Bytes>>, hyper::http:
             .header("Content-Type", "text/javascript; charset=utf-8")
             .status(StatusCode::OK)
             .body(INDEX_JS.into()),
+        "/config" => {
+            match serde_json::to_string(&ClientConfig {
+                prometheus_urls: vec!["http://localhost:9090".to_string()],
+            }) {
+                Ok(json) => Response::builder()
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .status(StatusCode::OK)
+                    .body(json.into()),
+                Err(err) => Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(err.to_string().into()),
+            }
+        }
         _ => Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body(Full::default()),
