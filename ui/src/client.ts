@@ -1,4 +1,4 @@
-// Entry point for the promdoc client UI.
+// State tracking for the promdoc client UI.
 // Copyright (C) 2023, Tony Rippy
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,9 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Client, init } from './client';
+import { PrometheusDriver } from 'prometheus-query';
 
-var client = init().then(client => {
-  console.info("loaded client");
-  return client;
-})
+interface ClientConfig {
+  prometheus_urls: string[]
+}
+
+export class Client {
+  private prom: PrometheusDriver[] = []
+
+  constructor (config: ClientConfig) {
+    config.prometheus_urls.forEach(url => {
+      this.prom.push(new PrometheusDriver({ endpoint: url }))
+    })
+  }
+}
+
+export async function init(): Promise<Client> {
+  const config = await fetch('/config')
+    .then(res => res.json())
+    .then(res => {
+      return res as ClientConfig
+    })
+  return new Client(config)
+}
