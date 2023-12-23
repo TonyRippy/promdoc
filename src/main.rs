@@ -69,6 +69,14 @@ async fn serve<R>(req: Request<R>) -> Result<Response<Full<Bytes>>, hyper::http:
                     .body(err.to_string().into()),
             }
         }
+        "/-/healthy" => Response::builder().status(StatusCode::OK).body("OK".into()),
+        "/-/ready" => Response::builder().status(StatusCode::OK).body("OK".into()),
+        "/-/reload" => Response::builder()
+            .status(StatusCode::NOT_IMPLEMENTED)
+            .body(Full::default()),
+        "/-/quit" => Response::builder()
+            .status(StatusCode::NOT_IMPLEMENTED)
+            .body(Full::default()),
         _ => Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body(Full::default()),
